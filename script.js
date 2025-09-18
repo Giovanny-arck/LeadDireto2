@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const whatsappInput = document.querySelector('input[name="whatsapp"]');
   whatsappInput.addEventListener('input', function(e) {
-    // Aplica uma máscara (DD) 9NNNN-NNNN para melhorar a experiência do usuário
     let value = e.target.value.replace(/\D/g, '');
     value = value.slice(0, 11); // Limita a 11 dígitos (DDD + número)
 
@@ -22,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
       value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
     }
     if (value.length > 9) {
-      // Formata para (DD) 9NNNN-NNNN
       value = `${value.substring(0, 10)}-${value.substring(10, 14)}`;
     }
 
@@ -32,20 +30,21 @@ document.addEventListener('DOMContentLoaded', function() {
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    // Pega o valor do WhatsApp e remove a formatação para obter apenas os dígitos
     const whatsappDigits = form.whatsapp.value.replace(/\D/g, '');
+
+    // Gera um event_id único (usado no Pixel e na API do Meta)
+    const eventId = Date.now().toString() + Math.random().toString(36).substring(2, 10);
 
     const formData = {
       nome: form.nome.value,
       email: form.email.value,
-      // Adiciona o prefixo +55 ao número limpo antes de enviar
       whatsapp: `+55${whatsappDigits}`,
       profissao: form.profissao.value, 
       valor_investimento: form.valor_investimento.value,
+      event_id: eventId, // <-- Adiciona o event_id no payload
       ...capturedUtms 
     };
     
-    // A validação agora checa se o número completo (+55 + 11 dígitos) tem 14 caracteres
     if (!formData.nome || !formData.email || !formData.whatsapp || formData.whatsapp.length < 14 || !formData.profissao || !formData.valor_investimento) {
       alert('Por favor, preencha todos os campos obrigatórios corretamente.');
       return;
@@ -55,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
     submitButton.textContent = 'ENVIANDO...';
     
     try {
-      const response1 = await fetch('https://n8nwebhook.arck1pro.shop/webhook/lp-lead-direto', { <!--adicionar webhook-->
+      const response1 = await fetch('https://n8nwebhook.arck1pro.shop/webhook/lp-lead-direto', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -68,18 +67,18 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       
       if (response1.ok && response2.ok) {
-        // Disparar evento do Meta Pixel
+        // Disparar evento do Meta Pixel com deduplicação
         if (typeof fbq === 'function') {
-          fbq('track', 'CompleteRegistration');
+          fbq('track', 'CompleteRegistration', {}, { eventID: eventId });
         }
 
-      alert('Cadastro realizado com sucesso. Em breve você receberá uma mensagem da nossa equipe!');
-
+        alert('Cadastro realizado com sucesso. Em breve você receberá uma mensagem da nossa equipe!');
         form.reset();
 
       } else {
-        // Identifica qual webhook falhou para facilitar a depuração
-        const failedHooks = responses.map((res, i) => !res.ok ? `Webhook ${i+1} (status: ${res.status})` : null).filter(Boolean).join(', ');
+        const failedHooks = [response1, response2]
+          .map((res, i) => !res.ok ? `Webhook ${i+1} (status: ${res.status})` : null)
+          .filter(Boolean).join(', ');
         throw new Error(`Erro ao enviar formulário. Falha em: ${failedHooks}`);
       }
     } catch (error) {
@@ -97,22 +96,14 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===============================================
 
 function scrollToForm() {
-  // O ID continua no formulário, então começamos por ele
   const formElement = document.getElementById('register-form');
   
   if (formElement) {
-    // MODIFICAÇÃO 1: Em vez de rolar para o form, vamos procurar o "pai" dele
-    // que tem a classe '.form-container'. Esse é o alvo correto.
     const containerParaRolar = formElement.closest('.form-container');
-
     if (containerParaRolar) {
-      // MODIFICAÇÃO 2: Adicionamos a opção "block: 'center'" para garantir
-      // que o container fique bem no meio da tela na vertical.
       containerParaRolar.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-
   } else {
-    // Se o formulário não for encontrado, rola para o topo da página.
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
