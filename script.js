@@ -55,22 +55,20 @@ document.addEventListener('DOMContentLoaded', function() {
     submitButton.textContent = 'ENVIANDO...';
     
     try {
-      const webhook1 = fetch('https://n8nwebhook.arck1pro.shop/webhook/lp-lead-direto', {
+      const response1 = await fetch('https://n8nwebhook.arck1pro.shop/webhook/lp-lead-direto', { <!--adicionar webhook-->
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
       
-      const webhook2 = fetch('https://n8nwebhook.arck1pro.shop/webhook/lp-lead-direto-rdmkt', {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify(formData)
+      const response2 = await fetch('https://n8nwebhook.arck1pro.shop/webhook/lp-lead-direto-rdmkt', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
       
-      const responses = await Promise.all([webhook1, webhook2]);
-
-      if (responses.every(res => res.ok)) {
-        // 🔥 Disparar evento do Meta Pixel
+      if (response1.ok && response2.ok) {
+        // Disparar evento do Meta Pixel
         if (typeof fbq === 'function') {
           fbq('track', 'CompleteRegistration');
         }
