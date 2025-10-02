@@ -12,40 +12,46 @@ document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('register-form');
   const submitButton = document.getElementById('submit-button');
   
-  const whatsappInput = document.querySelector('input[name="whatsapp"]');
-  whatsappInput.addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    value = value.slice(0, 11); // Limita a 11 dígitos (DDD + número)
-
-    if (value.length > 2) {
-      value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
-    }
-    if (value.length > 9) {
-      value = `${value.substring(0, 10)}-${value.substring(10, 14)}`;
-    }
-
-    e.target.value = value;
+  // --- ADICIONADO: INICIALIZAÇÃO DO CAMPO DE TELEFONE INTERNACIONAL ---
+  const whatsappInput = document.querySelector("#whatsapp");
+  const iti = window.intlTelInput(whatsappInput, {
+    initialCountry: "auto",
+    geoIpLookup: function(callback) {
+      fetch("https://ipapi.co/json")
+        .then(res => res.json())
+        .then(data => callback(data.country_code))
+        .catch(() => callback("br")); // Padrão para Brasil em caso de falha
+    },
+    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
   });
   
+  // --- REMOVIDO: O código antigo de máscara de telefone para (XX) XXXXX-XXXX foi retirado ---
+
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    
-    const whatsappDigits = form.whatsapp.value.replace(/\D/g, '');
 
+    // MODIFICADO: Validação para checar se o número é válido
+    if (!iti.isValidNumber()) {
+      alert('Por favor, insira um número de telefone válido.');
+      return;
+    }
+    
     // Gera um event_id único (usado no Pixel e na API do Meta)
     const eventId = Date.now().toString() + Math.random().toString(36).substring(2, 10);
 
     const formData = {
       nome: form.nome.value,
       email: form.email.value,
-      whatsapp: `+55${whatsappDigits}`,
+      // MODIFICADO: Captura o número completo no formato internacional (ex: +5547912345678)
+      whatsapp: iti.getNumber(),
       profissao: form.profissao.value, 
       valor_investimento: form.valor_investimento.value,
-      event_id: eventId, // <-- Adiciona o event_id no payload
+      event_id: eventId,
       ...capturedUtms 
     };
     
-    if (!formData.nome || !formData.email || !formData.whatsapp || formData.whatsapp.length < 14 || !formData.profissao || !formData.valor_investimento) {
+    // REMOVIDA validação antiga de tamanho do telefone
+    if (!formData.nome || !formData.email || !formData.profissao || !formData.valor_investimento) {
       alert('Por favor, preencha todos os campos obrigatórios corretamente.');
       return;
     }
@@ -67,14 +73,11 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       
       if (response1.ok && response2.ok) {
-        // Disparar evento do Meta Pixel com deduplicação
         if (typeof fbq === 'function') {
           fbq('track', 'CompleteRegistration', {}, { eventID: eventId });
         }
-
         alert('Cadastro realizado com sucesso. Em breve você receberá uma mensagem da nossa equipe!');
         form.reset();
-
       } else {
         const failedHooks = [response1, response2]
           .map((res, i) => !res.ok ? `Webhook ${i+1} (status: ${res.status})` : null)
@@ -91,13 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// ===============================================
-// FUNÇÃO PARA ROLAGEM DOS BOTÕES DAS NOVAS SEÇÕES
-// ===============================================
-
 function scrollToForm() {
   const formElement = document.getElementById('register-form');
-  
   if (formElement) {
     const containerParaRolar = formElement.closest('.form-container');
     if (containerParaRolar) {
