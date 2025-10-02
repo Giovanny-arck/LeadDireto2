@@ -540,3 +540,40 @@ body {
     .learn-section, .who-is-it-for-section, .what-it-is-not-section, .why-invest-section, .organizer-section, .presenter-section, .why-we-do-it-section { padding: 6rem 1rem; }
     .presenter-photo-container { width: 18rem; height: 18rem; }
 }
+/* ============================================= */
+/* 6. Estilos para a Biblioteca Intl-Tel-Input   */
+/* ============================================= */
+
+/* Altera a cor de fundo e borda da lista de países */
+.iti__country-list {
+  background-color: #2d3748; /* Um cinza-azulado escuro */
+  border: 1px solid #4a5568;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Altera a cor do texto de cada país na lista */
+.iti__country-list .iti__country {
+  color: #f7fafc; /* Um branco levemente acinzentado */
+}
+
+/* Altera a cor do código do país (ex: +55) */
+.iti__country-list .iti__dial-code {
+  color: #a0aec0; /* Um cinza mais claro para contraste */
+}
+
+/* Altera a cor de fundo do item quando o mouse passa por cima ou está selecionado */
+.iti__country-list .iti__country.iti__highlight {
+  background-color: #4a5568; /* Um cinza-azulado um pouco mais claro */
+}
+
+/* Bônus: Deixa a barra de rolagem com um estilo escuro também */
+.iti__country-list::-webkit-scrollbar {
+  width: 8px;
+}
+.iti__country-list::-webkit-scrollbar-track {
+  background: #2d3748;
+}
+.iti__country-list::-webkit-scrollbar-thumb {
+  background-color: #4a5568;
+  border-radius: 4px;
+}
